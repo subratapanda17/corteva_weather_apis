@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 load_dotenv()
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy import text
 
 class DB_CONNECTION:
     def __init__(self, env='LOCAL'):
@@ -42,20 +43,21 @@ class DB_CONNECTION:
                 dict_format (bool, optional): Whether to return results as dictionaries (defaults to False).
 
             Returns:
-                bool - For update operations, returns True if successful, False otherwise.
+                int - For update operations, returns number of rows updated.
                 list - For select operations, returns a list of rows (tuples) or dictionaries (if dict_format is True).
 
             Raises:
                 Exception: Any exception that occurs during query execution.
         """
         db = next(self.get_db())
+        query = text(query)
         try:
             result = db.execute(query)
             if update:
                 db.commit()
-                return result.rowcount > 0
+                return result.rowcount
             else:
-                if update==True:
+                if dict_format==True:
                     return result.mappings().all()
                 else:
                     return result.fetchall()

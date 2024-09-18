@@ -1,12 +1,20 @@
-from flask import Flask, jsonify, request, Blueprint
-from flask_restplus import Api
+from flask import Flask
+from flask_restx import Api
+from api.endpoints.weather_data_ingestion import weather_bp
 
-# from app.connectors
-
+# Create the Flask app
 app = Flask(__name__)
+
+# Initialize Flask-RESTX API
 api = Api(app)
 
-ns_conf = api.namespace(
-    "Weather api resources",
-    description = "Route for corveta coding challange weather data apis"
-)
+# Register the blueprint
+app.register_blueprint(weather_bp)
+
+@app.route('/')
+def home():
+    return "API is running!"
+
+# Run the app
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000, debug=True)
