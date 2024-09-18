@@ -11,11 +11,7 @@ api = Api(weather_bp)
 class WeatherDataIngest(Resource):
     @api.expect(weather_data_ingestion_model)
     def get(self):
-        # return "url found on server"
-        # Parse and validate the request arguments using the schema
-        # data = api.payload
-
-        # Call the logic function from modules/functions/weather_data_ingestion.py
+        
         result = InsertWeatherData().insert_weather_data()
         
         return jsonify(result)

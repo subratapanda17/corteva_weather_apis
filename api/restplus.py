@@ -3,7 +3,7 @@ import logging
 
 
 log = logging.getLogger(__name__)
-
+# app = 
 api  = Api(
     title='API restplus title',
     description="API restplus description",
@@ -14,7 +14,7 @@ ns_conf = api.namespace(
     "Weather api resources",
     description = "Route for corveta coding challange weather data apis"
 )
-
+api.add_namespace(ns_conf)
 
 @api.errorhandler
 def default_error_handler(error):
