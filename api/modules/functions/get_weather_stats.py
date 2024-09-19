@@ -53,12 +53,12 @@ class GET_WEATHER_STATS:
         df = self.fetch_weather_data()
         if len(df) == 0:
             response =  {
-                "status": "NOT FOUND",
+                "status": "NOT_FOUND",
                 "message": "No data available for the given criteria"
             }
             return response
         
-        df = df.replace(-9999, pd.NA).drop(columns=['id'])
+        df = df.replace(-9999, pd.NA).drop(columns=['id']) #replacing the noDataValue with NAN
         df['date'] = pd.to_datetime(df['date'], format='%Y%m%d')
         df['year'] = df['date'].dt.year
         df['month'] = df['date'].dt.month

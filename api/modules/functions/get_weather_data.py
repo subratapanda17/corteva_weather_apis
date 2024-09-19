@@ -55,13 +55,19 @@ class GET_WEATHER_DATA:
         result = db.execute_query(select_query, dict_format=True)
         result = json.loads(result.data)
 
-        return  {
-            "status": "SUCCESS",
-            "message": f"{len(result)} rows fetched",
-            "page_no": page_no,
-            "per_page": 50,
-            "total_pages": int((total_records/50)+1),
-            "total_records": total_records,
-            "data": result
-        }
+        if total_records > 0:
+            return  {
+                "status": "SUCCESS",
+                "message": f"{len(result)} rows fetched",
+                "page_no": page_no,
+                "per_page": 50,
+                "total_pages": int((total_records/50)+1),
+                "total_records": total_records,
+                "data": result
+            }
+        else:
+            return {
+                "status": "NOT_FOUND",
+                "message": "no record found"
+            }
 

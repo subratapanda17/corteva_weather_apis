@@ -1,45 +1,50 @@
 import logging
 from flask import Flask, jsonify
 from flask_restx import Api, Namespace, Resource
-from api.endpoints.weather_data_ingestion import weather_ingestion_ns
-from api.endpoints.get_weather_data import get_weather_data_ns
-from api.endpoints.get_weather_stats import get_weather_stats_ns
 
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
-app = Flask(__name__)
 
-# Initialize Flask-RESTX Api
-api = Api(
-    app,
-    version="1.0",
-    title="Weather API",
-    description="An API for retrieving and processing weather data.",
-    doc="/docs"  # Swagger UI available at /docs
-)
+def configure_logging(app):
+    handler = logging.StreamHandler()
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+    app.logger.addHandler(handler)
+    app.logger.setLevel(logging.DEBUG)
 
-# Define a basic error handler
-@app.errorhandler(Exception)
-def handle_exception(e):
-    # Log the exception
-    app.logger.error(f"An error occurred: {str(e)}")
-    # Return a JSON response
-    return jsonify({"error": str(e)}), 500
 
-# Define a test namespace
-test_ns = Namespace('test', description="Test Namespace")
+def create_app():
+    #Cofigure app
+    from api.endpoints.weather_data_ingestion import weather_ingestion_ns
+    from api.endpoints.get_weather_data import get_weather_data_ns
+    from api.endpoints.get_weather_stats import get_weather_stats_ns
 
-@test_ns.route('/hello')
-class HelloWorld(Resource):
-    def get(self):
-        app.logger.debug("In hello route")
-        return {"message": "Hello, World!"}
+    app = Flask(__name__)
+    api = Api(
+        app,
+        version="v1.1",
+        title="CORVETA Weather API",
+        description="An API for saving, retrieving and processing weather data.",
+        doc="/docs"  
+    )
+    
+    #Adding default error handler
+    @app.errorhandler(Exception)
+    def handle_exception(e):
+        app.logger.error(f"An error occurred: {str(e)}")
+        return jsonify({"error": str(e)}), 500
+    
 
-# Register namespaces
-api.add_namespace(test_ns, path='/api')
-api.add_namespace(weather_ingestion_ns, path='/api')
-api.add_namespace(get_weather_data_ns, path='/api')
-api.add_namespace(get_weather_stats_ns, path='/api')
+    api.add_namespace(weather_ingestion_ns, path='/api')
+    api.add_namespace(get_weather_data_ns, path='/api')
+    api.add_namespace(get_weather_stats_ns, path='/api')
 
+    # Configure logging
+    configure_logging(app)
+
+    return app
+
+
+#main function
 if __name__ == "__main__":
-    app.run(host="0.0.0.0",port="5001", debug=True)
+    app = create_app()
+    app.run(host="0.0.0.0",port="5000", debug=True)
