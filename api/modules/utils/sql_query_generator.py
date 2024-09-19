@@ -1,4 +1,9 @@
+
 class SQLQueryGenerator:
+    """
+        This module has been created to simplify raw SQL query construction. Although most developers including myself are comfortable with writing raw queries themselves, this would provide the some advantages such as flexibility in query construciton, code maintainability, consistent querying and improved readability. 
+        However, it does not support complex query construction yet, considering the time-frame for the coding challange; that feature will be implemented in later stages if possible after careful consideration.
+    """
     def __init__(self):
         self.query_parts = []
         self.table_name = None

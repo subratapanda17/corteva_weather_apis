@@ -10,7 +10,18 @@ import json
 db = DB_CONNECTION('LOCAL')
 
 class GET_WEATHER_DATA:
-    def __init__(self, date:int=None, weather_station_id:int=None):
+    """
+        fetches weather data based of filters
+        Args:
+            date: int [YYYYMMDD]
+            weather_station_id: str
+        Returns:
+            collected weather data from DB
+    """
+    def __init__(self, date:int=None, weather_station_id:str=None):
+        """
+            generates SQL query conditions (if applicable) based on filter selected by user
+        """
         self.filters = []
         if date:
             self.filters.append(f"date = {date}")
@@ -21,6 +32,13 @@ class GET_WEATHER_DATA:
 
 
     def generate_select_query(self, page_no):
+        """
+            generates sql query based on provided conditions for
+                fetching data
+                counting total records
+            Returns:
+                raw SQL query, raw SQL query
+        """
         count_generator = SQLQueryGenerator()
         query_generator = SQLQueryGenerator()
         limit = 50
@@ -47,6 +65,25 @@ class GET_WEATHER_DATA:
         return query, count_query
 
     def fetch_weather_data(self, page_no):
+        """
+            collects weather data from DB based on conditions
+            Args:
+                page_no: int [for paginated results]
+            Returns:
+                message: str [number of rows fetched]
+                per_page: int [50 records]
+                page_no: int
+                total_pages: int
+                total_records: int
+                data: list[dict]
+                    date: int,
+                    id: int,
+                    maxtemp: int,
+                    mintemp: int,
+                    rainfall: int,
+                    uniq_id: str,
+                    weather_station_id: str
+        """
         if not page_no:
             page_no = 1
 

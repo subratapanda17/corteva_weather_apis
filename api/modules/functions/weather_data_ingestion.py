@@ -9,7 +9,15 @@ from flask import current_app as app
 db = DB_CONNECTION('LOCAL')
 
 class INGEST_WEATHER_DATA:
+    """
+        Processes the data from the provided weather data files and inserts the data into MySQL Database
+        Returns:
+            message: stating if the data ingestion is successful (with number of rows inserted) or not
+    """
     def __init__(self):
+        """
+            Processes the weather data collected from all files in the specified directory and creates a pandas dataframe
+        """
         raw_data_path = 'api/data/wx_data/'
         self.error = None
         try:
@@ -28,6 +36,11 @@ class INGEST_WEATHER_DATA:
             
 
     def generate_insert_query(self, df):
+        """
+            generates insert query data
+            Returns:
+                    RAW sql query
+        """
         generator = SQLQueryGenerator()
         val_list= []
         count=0
@@ -50,6 +63,12 @@ class INGEST_WEATHER_DATA:
         return query
 
     def insert_weather_data(self):
+        """
+            fetches the insert query and executes it
+            Returns:
+                json stating api completion/failure
+                    message: str
+        """
         if self.error:
             app.logger.error("no data file found  in directory to insert")
             return {

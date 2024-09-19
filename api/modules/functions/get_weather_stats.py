@@ -12,9 +12,14 @@ class GET_WEATHER_STATS:
         Args: 
             year: int [ex: YYYY]
             weather_station_id: str [ex: 'USC00134735']
+        Returns:
+            staistics of the weather data for required weather station and year
     """
 
     def __init__(self, year:int=None, weather_station_id:int=None):
+        """
+            generates SQL query conditions (if applicable) based on filter selected by user
+        """
         self.year = year
         self.weather_station_id = weather_station_id
         self.filters = []
@@ -28,6 +33,11 @@ class GET_WEATHER_STATS:
         self.conditions = " AND ".join(self.filters) if self.filters else ""
 
     def generate_select_query(self):
+        """
+            generates raw SQL query with/without filters
+            Returns:
+                raw SQL query
+        """
         query_generator = SQLQueryGenerator()
 
         if len(self.conditions)>0:
@@ -42,6 +52,11 @@ class GET_WEATHER_STATS:
         return query
 
     def fetch_weather_data(self):
+        """
+            fetches the data from sql based on required conditions
+            Returns:
+                a generated pandas dataframe of the data collected
+        """
         select_query= self.generate_select_query()
         result = db.execute_query(select_query, dict_format=True)
         result = json.loads(result.data)
@@ -50,6 +65,17 @@ class GET_WEATHER_STATS:
         return result_df
     
     def get_stats(self):
+        """
+            fetches weather data from DB and generated required reports
+            Returns:
+                list of weather data statistics for selected criteria
+                    year: int
+                    weather_station_id: int
+                    average_max_temp: float
+                    average_min_temp: float
+                    total_precipitation_cm: float
+
+        """
         df = self.fetch_weather_data()
         if len(df) == 0:
             response =  {

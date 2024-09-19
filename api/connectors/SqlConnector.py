@@ -12,7 +12,7 @@ class DB_CONNECTION:
             Initializes the database connection based on the provided environment.
 
             Args:
-                env (str, optional): The environment for which to choose the connection URL. [defaul='LOCAL']
+                env: str | The environment for which to choose the connection URL. [defaul='LOCAL']
         """
         if env=='DEVELOPMENT':
             db_url = 'POSTGRES_DEV_URL'
@@ -39,9 +39,9 @@ class DB_CONNECTION:
             Executes a SQL query on the database and returns the results.
 
             Args:
-                query (str): The SQL query to execute.
-                update (bool, optional): Whether the query is an update operation (defaults to False).
-                dict_format (bool, optional): Whether to return results as dictionaries (defaults to False).
+                query: str | The SQL query to execute.
+                update: bool | Whether the query is an update operation (defaults to False).
+                dict_format: bool | Whether to return results as dictionaries (defaults to False).
 
             Returns:
                 int - For update operations, returns number of rows updated.
