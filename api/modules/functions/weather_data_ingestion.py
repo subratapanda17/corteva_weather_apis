@@ -32,7 +32,6 @@ class INGEST_WEATHER_DATA:
             
             self.all_weather_stn_data['uniq_id'] = self.all_weather_stn_data['weather_station_id'] + '_' + self.all_weather_stn_data['date'].astype(str)
             self.all_weather_stn_data.reset_index(drop=True,inplace=True)
-            print(self.all_weather_stn_data.shape)
         except:
             self.error = "no data file found  in directory to insert"
             
