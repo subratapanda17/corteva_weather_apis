@@ -1,15 +1,17 @@
-from flask import Blueprint, jsonify
-from flask_restx import Resource, Api, fields
-from api.modules.schemas.get_weather_stats import get_weather_stats_model
+from flask import Blueprint, jsonify, request
+from flask_restx import Resource, Api, fields, Namespace
 from api.modules.functions.get_weather_stats import GET_WEATHER_STATS
+from api.modules.schemas.get_weather_stats import getWeatherStatsParser
 
-# Create a blueprint for the weather data ingestion endpoint
-weather_get_bp = Blueprint('get_weather_data', __name__)
-api = Api(weather_get_bp)
+get_weather_stats_ns = Namespace('get_weather_stas', description='Weather data stats')
 
-@api.route('/getWeatherStats/')
-class GETWeatherStats(Resource):
-    @api.expect(get_weather_stats_model)
+@get_weather_stats_ns.route('/getWeatherStats/')
+class GETWeatherData(Resource):
+    @get_weather_stats_ns.expect(getWeatherStatsParser)
     def get(self):
-        
-        return jsonify("getweatherStats NONE")
+        req_obj = getWeatherStatsParser.parse_args(strict=True)
+        year = req_obj.get('year')
+        weather_station_id = req_obj.get('weather_station_id')
+
+        response = GET_WEATHER_STATS(year, weather_station_id).get_stats()
+        return response

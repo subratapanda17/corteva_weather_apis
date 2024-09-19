@@ -1,56 +1,99 @@
 from api.connectors.SqlConnector import DB_CONNECTION
 from api.modules.utils.sql_query_generator import SQLQueryGenerator
 import pandas as pd
-from datetime import datetime
-import os
+import json
 
 
 db = DB_CONNECTION('LOCAL')
 
 class GET_WEATHER_STATS:
-    def __init__(self):
-        raw_data_path = 'api/data/wx_data/'
-        self.all_weather_stn_data = pd.DataFrame()
-        for file in os.listdir(raw_data_path):
-            weather_station_id = file.split('.')[0]
-            df = pd.read_csv(os.path.join(raw_data_path,file), delimiter='\t',header=None, names=['date','maxtemp','mintemp','rainfall'])
-            df['weather_station_id'] = weather_station_id
-            self.all_weather_stn_data = pd.concat([self.all_weather_stn_data,df], axis=0)
-        
-        self.all_weather_stn_data['uniq_id'] = self.all_weather_stn_data['weather_station_id'] + '_' + self.all_weather_stn_data['date'].astype(str)
-        self.all_weather_stn_data.reset_index(drop=True,inplace=True)
-        print("weather dataframe generated with cols", self.all_weather_stn_data.columns)
+    """
+        fetches weather data based of filters (if present) and returns the weather statistics
+        Args: 
+            year: int [ex: YYYY]
+            weather_station_id: str [ex: 'USC00134735']
+    """
 
-    def generate_insert_query(self, df, on_conflict_col='uniq_id', on_conflict_action='NOTHING'):
-        generator = SQLQueryGenerator()
-        val_list= []
-        count=0
-        for idx,row in df.iterrows():
-            val_list.append({
-                'date': row['date'],
-                'maxtemp': row['maxtemp'],
-                'mintemp': row['mintemp'],
-                'rainfall': row['rainfall'],
-                'weather_station_id': row['weather_station_id'],
-                'uniq_id': row['uniq_id'],
-            })
-            count+=1
-            # if count==20:
-            #     break
-        query = (generator
-                 .insert_many('corveta_weather_record', val_list)
-                 .build())
+    def __init__(self, year:int=None, weather_station_id:int=None):
+        self.year = year
+        self.weather_station_id = weather_station_id
+        self.filters = []
+        if year:
+            st_date = int(f"{year}0101")
+            ed_date = int(f"{year}1231")
+            self.filters.append(f"date BETWEEN {st_date} AND {ed_date}")
+        if weather_station_id:
+            self.filters.append(f"weather_station_id = '{weather_station_id}'")
+        
+        self.conditions = " AND ".join(self.filters) if self.filters else ""
+
+    def generate_select_query(self):
+        query_generator = SQLQueryGenerator()
+
+        if len(self.conditions)>0:
+            query = (query_generator
+                    .select('corveta_weather_record','*')
+                    .where(self.conditions)
+                    .build())
+        else:
+            query = (query_generator
+                    .select('corveta_weather_record','*')
+                    .build())
         return query
 
-    def insert_weather_data(self):
-        insert_query = self.generate_insert_query(self.all_weather_stn_data, 'uniq_id', 'NOTHING')
+    def fetch_weather_data(self):
+        select_query= self.generate_select_query()
+        result = db.execute_query(select_query, dict_format=True)
+        result = json.loads(result.data)
+        result_df = pd.DataFrame(result)
 
-        rowscount = db.execute_query(insert_query, update=True)
-        print(rowscount)
+        return result_df
+    
+    def get_stats(self):
+        df = self.fetch_weather_data()
+        if len(df) == 0:
+            response =  {
+                "status": "NOT FOUND",
+                "message": "No data available for the given criteria"
+            }
+            return response
+        
+        df = df.replace(-9999, pd.NA).drop(columns=['id'])
+        df['date'] = pd.to_datetime(df['date'], format='%Y%m%d')
+        df['year'] = df['date'].dt.year
+        df['month'] = df['date'].dt.month
+        df['day'] = df['date'].dt.day
+        df['maxtemp'] = df['maxtemp'] / 10  # Convert tenths of degree Celsius to degrees Celsius
+        df['mintemp'] = df['mintemp'] / 10  # Convert tenths of degree Celsius to degrees Celsius
+        df['rainfall'] = df['rainfall'] / 100 # Convert tenths of millimeter to centimeters
 
+        if self.year:
+            df = df[df['year'] == self.year]
+        if self.weather_station_id:
+            df = df[df['weather_station_id'] == self.weather_station_id]
+
+        stats = df.groupby(['year', 'weather_station_id']).agg(
+                    average_max_temp=('maxtemp', 'mean'),
+                    average_min_temp=('mintemp', 'mean'),
+                    total_precipitation_cm=('rainfall', 'sum')
+                ).reset_index()
+        
+        #changing the data type fomr object to float
+        stats['average_max_temp'] = stats['average_max_temp'].astype(float)
+        stats['average_min_temp'] = stats['average_min_temp'].astype(float)
+        stats['total_precipitation_cm'] = stats['total_precipitation_cm'].astype(float)
+
+        #rounding off the values to 2 decimal points
+        stats['average_max_temp'] = stats['average_max_temp'].round(2)
+        stats['average_min_temp'] = stats['average_min_temp'].round(2)
+        stats['total_precipitation_cm'] = stats['total_precipitation_cm'].round(2)
+        
+        stats_dict = stats.to_dict(orient='records')
         response = {
             "status": "SUCCESS",
-            "message": f"{rowscount} rows inserted"
+            "message": f"weather stats fetched",
+            "data": stats_dict
         }
+
         return response
 

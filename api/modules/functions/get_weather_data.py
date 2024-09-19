@@ -12,8 +12,6 @@ db = DB_CONNECTION('LOCAL')
 class GET_WEATHER_DATA:
     def __init__(self, date:int=None, weather_station_id:int=None):
         self.filters = []
-        date = 19850101
-        # weather_station_id = 'USC00110072'
         if date:
             self.filters.append(f"date = {date}")
         if weather_station_id:
@@ -21,16 +19,14 @@ class GET_WEATHER_DATA:
         
         self.conditions = " AND ".join(self.filters) if self.filters else ""
 
-        print(self.conditions)
 
-    def generate_insert_query(self, page_no):
+    def generate_select_query(self, page_no):
         count_generator = SQLQueryGenerator()
         query_generator = SQLQueryGenerator()
         limit = 50
         offset = (page_no-1)*limit
 
         if len(self.conditions)>0:
-            print("if")
             count_query = (count_generator
                            .count('corveta_weather_record')
                            .where(self.conditions)
@@ -41,26 +37,21 @@ class GET_WEATHER_DATA:
                     .limit(limit).offset(offset)
                     .build())
         else:
-            print("else")
             count_query = (count_generator
                            .count('corveta_weather_record')
                            .build())
-            print(count_query)
             query = (query_generator
                     .select('corveta_weather_record','*')
                     .limit(limit).offset(offset)
                     .build())
-            print(query)
-            print("================")
         return query, count_query
 
-    def fetch_weather_data(self, page_no=1):
-        select_query, count_query= self.generate_insert_query(page_no)
-        print("selectquery=>",select_query)
-        print("countquery=>",count_query)
-        # return False
+    def fetch_weather_data(self, page_no):
+        if not page_no:
+            page_no = 1
+
+        select_query, count_query= self.generate_select_query(page_no)
         total_records = db.execute_query(count_query)[0][0]
-        print(total_records)
         result = db.execute_query(select_query, dict_format=True)
         result = json.loads(result.data)
 

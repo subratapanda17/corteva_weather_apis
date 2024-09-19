@@ -1,9 +1,6 @@
-from flask_restx import fields
-from flask_restx import Api
+from flask_restx import reqparse
 
-api = Api()
+getWeatherStatsParser = reqparse.RequestParser()
+getWeatherStatsParser.add_argument('year', type=int, required=False, help='Year to calculate weather stats YYYY', location='args')
+getWeatherStatsParser.add_argument('weather_station_id', type=str, required=False, help='weather station id', location='args')
 
-get_weather_stats_model = api.model('getWeatherStats', {
-    'station_id': fields.String(required=False, description='Station ID string'),
-    'date': fields.Integer(required=False, description='date int [yyyymmdd]')
-})

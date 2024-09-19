@@ -1,8 +1,4 @@
-from flask_restx import fields
-from flask_restx import Api
+from flask_restx import reqparse
 
-api = Api()
+weatherIngetionParser = reqparse.RequestParser()
 
-weather_data_ingestion_model = api.model('WeatherDataIngestion', {
-    'station_id': fields.String(required=True, description='Station ID')
-})

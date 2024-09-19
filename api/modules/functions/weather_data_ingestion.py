@@ -7,7 +7,7 @@ import os
 
 db = DB_CONNECTION('LOCAL')
 
-class InsertWeatherData:
+class INGEST_WEATHER_DATA:
     def __init__(self):
         raw_data_path = 'api/data/wx_data/'
         self.all_weather_stn_data = pd.DataFrame()
@@ -19,13 +19,11 @@ class InsertWeatherData:
         
         self.all_weather_stn_data['uniq_id'] = self.all_weather_stn_data['weather_station_id'] + '_' + self.all_weather_stn_data['date'].astype(str)
         self.all_weather_stn_data.reset_index(drop=True,inplace=True)
-        print("weather dataframe generated with cols", self.all_weather_stn_data.columns)
 
-    def generate_insert_query(self, df, on_conflict_col='uniq_id', on_conflict_action='NOTHING'):
+    def generate_insert_query(self, df):
         generator = SQLQueryGenerator()
-        print(generator)
         val_list= []
-        count=0
+    
         for idx,row in df.iterrows():
             val_list.append({
                 'date': row['date'],
@@ -35,24 +33,27 @@ class InsertWeatherData:
                 'weather_station_id': row['weather_station_id'],
                 'uniq_id': row['uniq_id'],
             })
-            count+=1
-            if count==10000:
-                break
+            break
+
         query = (generator
                  .insert_many('corveta_weather_record', val_list)
                  .build())
         return query
 
     def insert_weather_data(self):
-        print("code 1")
-        insert_query = self.generate_insert_query(self.all_weather_stn_data, 'uniq_id', 'NOTHING')
+        insert_query = self.generate_insert_query(self.all_weather_stn_data)
 
         rowscount = db.execute_query(insert_query, update=True)
-        print(rowscount)
+        if rowscount > 0:
+            response = {
+                "status": "SUCCESS",
+                "message": f"{rowscount} rows inserted"
+            }
+        else:
+            response = {
+                "status": "CONFLICT",
+                "message": f"selected data already present in DB"
+            }
 
-        response = {
-            "status": "SUCCESS",
-            "message": f"{rowscount} rows inserted"
-        }
         return response
 
