@@ -31,7 +31,7 @@ def create_app():
     api = Api(
         app,
         version="v1.1",
-        title="CORVETA Weather API",
+        title="CORTEVA Weather API",
         description="An API for saving, retrieving and processing weather data.",
         doc="/docs"  
     )

@@ -46,20 +46,20 @@ class GET_WEATHER_DATA:
 
         if len(self.conditions)>0:
             count_query = (count_generator
-                           .count('corveta_weather_record')
+                           .count('corteva_weather_record')
                            .where(self.conditions)
                            .build())
             query = (query_generator
-                    .select('corveta_weather_record','*')
+                    .select('corteva_weather_record','*')
                     .where(self.conditions)
                     .limit(limit).offset(offset)
                     .build())
         else:
             count_query = (count_generator
-                           .count('corveta_weather_record')
+                           .count('corteva_weather_record')
                            .build())
             query = (query_generator
-                    .select('corveta_weather_record','*')
+                    .select('corteva_weather_record','*')
                     .limit(limit).offset(offset)
                     .build())
         return query, count_query

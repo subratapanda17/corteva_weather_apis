@@ -42,12 +42,12 @@ class GET_WEATHER_STATS:
 
         if len(self.conditions)>0:
             query = (query_generator
-                    .select('corveta_weather_record','*')
+                    .select('corteva_weather_record','*')
                     .where(self.conditions)
                     .build())
         else:
             query = (query_generator
-                    .select('corveta_weather_record','*')
+                    .select('corteva_weather_record','*')
                     .build())
         return query
 

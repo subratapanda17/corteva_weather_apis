@@ -1,5 +1,5 @@
 COMMON_NAMESPACE_NAME = 'weather data apis'
-COMMON_NAMESPACE_DESCRIPTION = 'multiple perations of corveta weather data'
+COMMON_NAMESPACE_DESCRIPTION = 'multiple perations of corteva weather data'
 
 OK = 200
 SUCCESS = 200

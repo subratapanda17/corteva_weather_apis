@@ -54,7 +54,7 @@ class INGEST_WEATHER_DATA:
             })
 
         query = (generator
-                 .insert_many('corveta_weather_record', val_list)
+                 .insert_many('corteva_weather_record', val_list)
                  .build())
         return query
 
