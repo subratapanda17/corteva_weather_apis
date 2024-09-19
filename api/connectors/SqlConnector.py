@@ -15,11 +15,11 @@ class DB_CONNECTION:
                 env: str | The environment for which to choose the connection URL. [defaul='LOCAL']
         """
         if env=='DEVELOPMENT':
-            db_url = 'POSTGRES_DEV_URL'
+            db_url = 'MYSQL_DEV_URL'
         elif env=='PRODUCTION':
-            db_url = 'POSTGRES_PROD_URL'
+            db_url = 'MYSQL_PROD_URL'
         else:
-            db_url = 'POSTGRES_LOCAL_URL'
+            db_url = 'MYSQL_LOCAL_URL'
 
         engine = create_engine(os.getenv(db_url))
         self.session = sessionmaker(bind=engine)
