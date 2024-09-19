@@ -43,7 +43,6 @@ class INGEST_WEATHER_DATA:
         """
         generator = SQLQueryGenerator()
         val_list= []
-        count=0
         for idx,row in df.iterrows():
             val_list.append({
                 'date': row['date'],
@@ -53,9 +52,6 @@ class INGEST_WEATHER_DATA:
                 'weather_station_id': row['weather_station_id'],
                 'uniq_id': row['uniq_id'],
             })
-            count+=1
-            # if count==1000000:
-            #     break
 
         query = (generator
                  .insert_many('corveta_weather_record', val_list)
@@ -75,24 +71,46 @@ class INGEST_WEATHER_DATA:
                 "status" : "NOT_FOUND",
                 "message" : "no data file found in directory to insert"
             }
-        insert_query = self.generate_insert_query(self.all_weather_stn_data)
         
+        batch_size = 10000
+        total_rows = self.all_weather_stn_data.shape[0]
+        total_batches = (total_rows // batch_size) + (total_rows % batch_size > 0)
+        app.logger.info(f"Inserting data in {total_batches} batches, each with a size of {batch_size} rows")
+
+        total_inserted_rows = 0
         st_time = datetime.now()
-        rowscount = db.execute_query(insert_query, update=True)
-        et_time = datetime.now()
-        time_taken = (et_time-st_time).total_seconds()
+
+        # data insertion in batches
+        for i in range(total_batches):
+            start_idx = i * batch_size
+            end_idx = min(start_idx + batch_size, total_rows)
+            batch_df = self.all_weather_stn_data.iloc[start_idx:end_idx]
+
+            batch_st_time = datetime.now()
+            insert_query = self.generate_insert_query(batch_df)
+            rows_inserted = db.execute_query(insert_query, update=True)
+            batch_et_time = datetime.now()
+
+            batch_time_taken = (batch_et_time - batch_st_time).total_seconds()
+
+            total_inserted_rows += rows_inserted
+            app.logger.info(f"Batch {i+1}/{total_batches}: Inserted {rows_inserted} rows | Time taken = {batch_time_taken:.2f} seconds")
         
-        if rowscount > 0:
-            app.logger.info(f"{rowscount} data inserted | time taken = {time_taken} seconds")
+        et_time = datetime.now()
+        total_time_taken = (et_time - st_time).total_seconds()
+
+        if total_inserted_rows > 0:
+            app.logger.info(f"Total {total_inserted_rows} rows inserted | Total time taken = {total_time_taken:.2f} seconds")
             response = {
                 "status": "SUCCESS",
-                "message": f"{rowscount} rows inserted"
+                "message": f"{total_inserted_rows} rows inserted"
             }
+        
         else:
-            app.logger.error(f"selected data already present in DB | time taken = {time_taken} seconds")
+            app.logger.error(f"No rows inserted (data may already exist) | Total time taken = {total_time_taken:.2f} seconds")
             response = {
                 "status": "CONFLICT",
-                "message": f"selected data already present in DB"
+                "message": "Selected data already present in DB or no new rows inserted"
             }
 
         return response
