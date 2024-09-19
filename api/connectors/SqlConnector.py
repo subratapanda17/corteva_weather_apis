@@ -4,6 +4,7 @@ load_dotenv()
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
+from flask import jsonify
 
 class DB_CONNECTION:
     def __init__(self, env='LOCAL'):
@@ -58,7 +59,9 @@ class DB_CONNECTION:
                 return result.rowcount
             else:
                 if dict_format==True:
-                    return result.mappings().all()
+                    data = [dict(row) for row in result.mappings()]
+                    json_data = jsonify(data)
+                    return json_data
                 else:
                     return result.fetchall()
         except Exception as e:

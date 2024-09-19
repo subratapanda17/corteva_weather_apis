@@ -3,54 +3,74 @@ from api.modules.utils.sql_query_generator import SQLQueryGenerator
 import pandas as pd
 from datetime import datetime
 import os
+from flask import jsonify
+import json
 
 
 db = DB_CONNECTION('LOCAL')
 
 class GET_WEATHER_DATA:
-    def __init__(self):
-        raw_data_path = 'api/data/wx_data/'
-        self.all_weather_stn_data = pd.DataFrame()
-        for file in os.listdir(raw_data_path):
-            weather_station_id = file.split('.')[0]
-            df = pd.read_csv(os.path.join(raw_data_path,file), delimiter='\t',header=None, names=['date','maxtemp','mintemp','rainfall'])
-            df['weather_station_id'] = weather_station_id
-            self.all_weather_stn_data = pd.concat([self.all_weather_stn_data,df], axis=0)
+    def __init__(self, date:int=None, weather_station_id:int=None):
+        self.filters = []
+        date = 19850101
+        # weather_station_id = 'USC00110072'
+        if date:
+            self.filters.append(f"date = {date}")
+        if weather_station_id:
+            self.filters.append(f"weather_station_id = '{weather_station_id}'")
         
-        self.all_weather_stn_data['uniq_id'] = self.all_weather_stn_data['weather_station_id'] + '_' + self.all_weather_stn_data['date'].astype(str)
-        self.all_weather_stn_data.reset_index(drop=True,inplace=True)
-        print("weather dataframe generated with cols", self.all_weather_stn_data.columns)
+        self.conditions = " AND ".join(self.filters) if self.filters else ""
 
-    def generate_insert_query(self, df, on_conflict_col='uniq_id', on_conflict_action='NOTHING'):
-        generator = SQLQueryGenerator()
-        val_list= []
-        count=0
-        for idx,row in df.iterrows():
-            val_list.append({
-                'date': row['date'],
-                'maxtemp': row['maxtemp'],
-                'mintemp': row['mintemp'],
-                'rainfall': row['rainfall'],
-                'weather_station_id': row['weather_station_id'],
-                'uniq_id': row['uniq_id'],
-            })
-            count+=1
-            # if count==20:
-            #     break
-        query = (generator
-                 .insert_many('corveta_weather_record', val_list)
-                 .build())
-        return query
+        print(self.conditions)
 
-    def insert_weather_data(self):
-        insert_query = self.generate_insert_query(self.all_weather_stn_data, 'uniq_id', 'NOTHING')
+    def generate_insert_query(self, page_no):
+        count_generator = SQLQueryGenerator()
+        query_generator = SQLQueryGenerator()
+        limit = 50
+        offset = (page_no-1)*limit
 
-        rowscount = db.execute_query(insert_query, update=True)
-        print(rowscount)
+        if len(self.conditions)>0:
+            print("if")
+            count_query = (count_generator
+                           .count('corveta_weather_record')
+                           .where(self.conditions)
+                           .build())
+            query = (query_generator
+                    .select('corveta_weather_record','*')
+                    .where(self.conditions)
+                    .limit(limit).offset(offset)
+                    .build())
+        else:
+            print("else")
+            count_query = (count_generator
+                           .count('corveta_weather_record')
+                           .build())
+            print(count_query)
+            query = (query_generator
+                    .select('corveta_weather_record','*')
+                    .limit(limit).offset(offset)
+                    .build())
+            print(query)
+            print("================")
+        return query, count_query
 
-        response = {
+    def fetch_weather_data(self, page_no=1):
+        select_query, count_query= self.generate_insert_query(page_no)
+        print("selectquery=>",select_query)
+        print("countquery=>",count_query)
+        # return False
+        total_records = db.execute_query(count_query)[0][0]
+        print(total_records)
+        result = db.execute_query(select_query, dict_format=True)
+        result = json.loads(result.data)
+
+        return  {
             "status": "SUCCESS",
-            "message": f"{rowscount} rows inserted"
+            "message": f"{len(result)} rows fetched",
+            "page_no": page_no,
+            "per_page": 50,
+            "total_pages": int((total_records/50)+1),
+            "total_records": total_records,
+            "data": result
         }
-        return response
 

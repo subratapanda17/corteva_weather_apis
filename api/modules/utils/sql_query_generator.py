@@ -33,7 +33,8 @@ class SQLQueryGenerator:
         self.query_parts.append(f" OFFSET {offset}")
         return self
 
-    def count(self):
+    def count(self, table_name):
+        self.table_name = table_name
         if self.table_name:
             self.query_parts.append(f"SELECT COUNT(*) FROM {self.table_name}")
         return self

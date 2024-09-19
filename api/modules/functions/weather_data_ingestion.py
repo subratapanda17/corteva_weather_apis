@@ -23,6 +23,7 @@ class InsertWeatherData:
 
     def generate_insert_query(self, df, on_conflict_col='uniq_id', on_conflict_action='NOTHING'):
         generator = SQLQueryGenerator()
+        print(generator)
         val_list= []
         count=0
         for idx,row in df.iterrows():
@@ -35,14 +36,15 @@ class InsertWeatherData:
                 'uniq_id': row['uniq_id'],
             })
             count+=1
-            # if count==20:
-            #     break
+            if count==10000:
+                break
         query = (generator
                  .insert_many('corveta_weather_record', val_list)
                  .build())
         return query
 
     def insert_weather_data(self):
+        print("code 1")
         insert_query = self.generate_insert_query(self.all_weather_stn_data, 'uniq_id', 'NOTHING')
 
         rowscount = db.execute_query(insert_query, update=True)
