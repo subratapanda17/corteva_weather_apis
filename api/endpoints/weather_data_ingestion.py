@@ -22,4 +22,4 @@ class WeatherDataIngest(Resource):
             return response, getattr(settings, response.get("status"))
         except Exception as e:
             app.logger.error(f"Error during weather data ingestion: {str(e)}")
-            return {"error": str(e)}, 500
+            return {"error": str(e)}, e.code

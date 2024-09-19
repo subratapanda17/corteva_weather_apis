@@ -40,7 +40,7 @@ def create_app():
     @app.errorhandler(Exception)
     def handle_exception(e):
         app.logger.error(f"An error occurred: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": str(e)}), e.code
     
 
     # adding the api blueprints

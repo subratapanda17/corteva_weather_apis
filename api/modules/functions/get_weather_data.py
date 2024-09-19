@@ -5,9 +5,11 @@ from datetime import datetime
 import os
 from flask import jsonify
 import json
+from api.config import settings
 
 
-db = DB_CONNECTION('LOCAL')
+db = DB_CONNECTION(settings.DB_TYPE)
+sql_table_name = settings.SQL_TABLE_NAME
 
 class GET_WEATHER_DATA:
     """
@@ -46,20 +48,20 @@ class GET_WEATHER_DATA:
 
         if len(self.conditions)>0:
             count_query = (count_generator
-                           .count('corteva_weather_record')
+                           .count(sql_table_name)
                            .where(self.conditions)
                            .build())
             query = (query_generator
-                    .select('corteva_weather_record','*')
+                    .select(sql_table_name,'*')
                     .where(self.conditions)
                     .limit(limit).offset(offset)
                     .build())
         else:
             count_query = (count_generator
-                           .count('corteva_weather_record')
+                           .count(sql_table_name)
                            .build())
             query = (query_generator
-                    .select('corteva_weather_record','*')
+                    .select(sql_table_name,'*')
                     .limit(limit).offset(offset)
                     .build())
         return query, count_query
@@ -86,7 +88,13 @@ class GET_WEATHER_DATA:
         """
         if not page_no:
             page_no = 1
-
+            
+        if page_no < 1:
+            return {
+                "status": "BAD_REQUEST",
+                "message": "page_no should be a positive integer"
+            }
+    
         select_query, count_query= self.generate_select_query(page_no)
         total_records = db.execute_query(count_query)[0][0]
         result = db.execute_query(select_query, dict_format=True)

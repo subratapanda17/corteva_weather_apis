@@ -4,9 +4,11 @@ import pandas as pd
 from datetime import datetime
 import os
 from flask import current_app as app
+from api.config import settings
 
 
-db = DB_CONNECTION('LOCAL')
+db = DB_CONNECTION(settings.DB_TYPE)
+sql_table_name = settings.SQL_TABLE_NAME
 
 class INGEST_WEATHER_DATA:
     """
@@ -54,7 +56,7 @@ class INGEST_WEATHER_DATA:
             })
 
         query = (generator
-                 .insert_many('corteva_weather_record', val_list)
+                 .insert_many(sql_table_name, val_list)
                  .build())
         return query
 

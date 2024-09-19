@@ -2,9 +2,11 @@ from api.connectors.SqlConnector import DB_CONNECTION
 from api.modules.utils.sql_query_generator import SQLQueryGenerator
 import pandas as pd
 import json
+from api.config import settings
 
 
-db = DB_CONNECTION('LOCAL')
+db = DB_CONNECTION(settings.DB_TYPE)
+sql_table_name = settings.SQL_TABLE_NAME
 
 class GET_WEATHER_STATS:
     """
@@ -42,12 +44,12 @@ class GET_WEATHER_STATS:
 
         if len(self.conditions)>0:
             query = (query_generator
-                    .select('corteva_weather_record','*')
+                    .select(sql_table_name,'*')
                     .where(self.conditions)
                     .build())
         else:
             query = (query_generator
-                    .select('corteva_weather_record','*')
+                    .select(sql_table_name,'*')
                     .build())
         return query
 

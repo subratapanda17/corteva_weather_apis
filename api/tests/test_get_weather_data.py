@@ -4,7 +4,7 @@ from app import create_app
 @pytest.fixture
 def app():
    app = create_app()
-   app.config.from_object('api.config.testing.TestingConfig')
+   app.config.from_object('api.config.settings.TestingConfig')
    yield app
 
 @pytest.fixture
@@ -42,7 +42,7 @@ def test_with_wrong_params(client):
       'c': 1
    })
    assert response.status_code == 400
-   data_sample = response.get_json().get('message')
+   data_sample = response.get_json().get('error')
    assert 'Unknown arguments' in data_sample
 
 def test_with_wrong_values(client):
@@ -51,6 +51,14 @@ def test_with_wrong_values(client):
       'weather_station_id': 'NON_EXISTING_CODE',
       'page_no': 1
    })
+   assert response.status_code == 404
+   data_sample = response.get_json().get('message')
+   assert 'no record' in data_sample
+
+def test_with_wrong_page_no(client):
+   response = client.get('/api/getWeatherData/', query_string={
+      'page_no': -11
+   })
    assert response.status_code == 400
    data_sample = response.get_json().get('message')
-   assert 'Unknown arguments' in data_sample
+   assert 'positive integer' in data_sample
